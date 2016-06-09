@@ -82,14 +82,18 @@ fn print_videos(term: &mut Terminal, videos: Vec<Video>) {
     }
 }
 
+fn gen_url(limit: usize, token: String) -> String {
+    let base_url = "https://www.googleapis.com/youtube/v3/";
+    format!("{}videos?chart=mostPopular&key={}&part=snippet&maxResults={}&pageToken={}",
+             base_url, apikey::KEY, limit, token)
+}
+
 fn main() {
     let mut term = Terminal::new().expect("Couldn't create terminal");
     term.hide_cursor().unwrap();
-
-    let base_url = "https://www.googleapis.com/youtube/v3/";
-    let mut url = format!("{}videos?chart=mostPopular&key={}&part=snippet&maxResults=4&pageToken={}",
-                      base_url, apikey::KEY, "");
-
+    
+    let limit = term.rows() / 3;
+    let mut url = gen_url(limit, "".to_string());
     let mut video_data = get_videos(&url);
     print_videos(&mut term, video_data.videos);
 
@@ -100,21 +104,16 @@ fn main() {
                     break 'main;
                 }
                 '\x36' => {
-                    url = format!("{}videos?chart=mostPopular&key={}&part=snippet&maxResults=4&pageToken={}",
-                        base_url, apikey::KEY, video_data.next_token);
-                    
+                    url = gen_url(limit, video_data.next_token);
                     video_data = get_videos(&url);
                     print_videos(&mut term, video_data.videos);
                 }
                 '\x35' => {
-                    url = format!("{}videos?chart=mostPopular&key={}&part=snippet&maxResults=4&pageToken={}",
-                        base_url, apikey::KEY, video_data.prev_token);
-                    
+                    url = gen_url(limit, video_data.prev_token);
                     video_data = get_videos(&url);
                     print_videos(&mut term, video_data.videos);
                 }
-                _ => {
-                }
+                _ => {}
             }
         }
 
