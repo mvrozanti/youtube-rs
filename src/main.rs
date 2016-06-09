@@ -3,9 +3,12 @@ extern crate rustty;
 extern crate rustc_serialize;
 
 use std::io::prelude::Read;
+use std::time::Duration;
 
 use hyper::client::{Client, Response};
 use rustc_serialize::json::Json;
+use rustty::{Terminal, Cell, Color, Attr, Event};
+use rustty::ui::{Dialog, Painter};
 
 mod apikey;
 
@@ -45,11 +48,33 @@ fn get_videos(url: &str) -> Vec<Video> {
     return videos
 }
 
+fn print_videos(term: &mut Terminal, videos: Vec<Video>) {
+    for (i, video) in videos.iter().enumerate() {
+        term.printline(0, i * 2, &video.title);
+    }
+}
+
 fn main() {
+    let mut term = Terminal::new().expect("Couldn't create terminal");
+    term.hide_cursor().unwrap();
+
     let base_url = "https://www.googleapis.com/youtube/v3/videos" ;
     let url = format!("{}?chart=mostPopular&key={}&part=snippet&maxResults=4",
                       base_url, apikey::KEY);
 
     let videos = get_videos(&url);
-    println!("{}", videos[1].title);
+    print_videos(&mut term, videos);
+
+    'main: loop {
+        while let Some(Event::Key(ch)) = term.get_event(Duration::new(0, 0)).unwrap() {
+            match ch {
+                'q' => {
+                    break 'main;
+                }
+                _ => {}
+            }
+        }
+
+        term.swap_buffers().unwrap(); 
+    }
 }
