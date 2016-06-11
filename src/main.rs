@@ -107,6 +107,7 @@ fn change_active(term: &mut Terminal, current_video: usize, videos: &Vec<Video>)
     }
 
     term.printline_with_cell(0, current_video * 3, &videos[current_video].title, cell_active);
+    term.swap_buffers().unwrap();
 }
 
 fn main() {
@@ -141,7 +142,6 @@ fn main() {
     });
 
     let send_command = format!("{}/src/send_command.sh", current_dir().unwrap().display());
-
     'main: loop {
         while let Some(Event::Key(ch)) = term.get_event(Duration::new(0, 0)).unwrap() {
             match ch {
@@ -207,6 +207,6 @@ fn main() {
             }
         }
 
-        term.swap_buffers().unwrap(); 
+        thread::sleep(Duration::from_millis(15))
     }
 }
