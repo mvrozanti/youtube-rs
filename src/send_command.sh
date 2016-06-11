@@ -11,4 +11,4 @@ for arg in $@; do
   ((i++))
 done
 
-echo '{"command": ['$args']}' | socat - /tmp/mpvsocket
+echo '{"command": ['$args']}' | socat - /tmp/mpvsocket >/dev/null

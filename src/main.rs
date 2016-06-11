@@ -122,13 +122,16 @@ fn main() {
     change_active(&mut term, current_video, &video_data.videos);
     
     thread::spawn(move || {
-        let output = Command::new("mpv")
+        Command::new("mpv")
             .arg("--force-window")
             .arg("--idle")
             .arg("--input-ipc-server=/tmp/mpvsocket")
+            .arg("--really-quiet")
             .output()
             .expect("Couldn't play video");
     });
+
+    let send_command = format!("{}/src/send_command.sh", current_dir().unwrap().display());
 
     'main: loop {
         while let Some(Event::Key(ch)) = term.get_event(Duration::new(0, 0)).unwrap() {
@@ -163,12 +166,7 @@ fn main() {
                     }
                 }
                 '\r' => {
-                    let send_command = format!("{}/src/send_command.sh", current_dir().unwrap().display());
-
-                    Command::new(&send_command)
-                        .arg("stop")
-                        .output()
-                        .unwrap();
+                    Command::new(&send_command).arg("stop").spawn().unwrap();
 
                     for i in current_video..video_data.videos.len() {
                         let video_url = format!("http://www.youtube.com/watch?v={}", 
@@ -177,19 +175,25 @@ fn main() {
                             Command::new(&send_command)
                                 .arg("loadfile")
                                 .arg(&video_url)
-                                .output()
+                                .spawn()
                                 .unwrap();
                         } else {
                             Command::new(&send_command)
                                 .arg("loadfile")
                                 .arg(&video_url)
                                 .arg("append")
-                                .output()
+                                .spawn()
                                 .unwrap();
                         }
                     }
-
-                                    }
+                }
+                'p' => {
+                    Command::new(&send_command)
+                        .arg("keypress")
+                        .arg("p")
+                        .spawn()
+                        .unwrap();
+                }
                 _ => {}
             }
         }
