@@ -113,8 +113,7 @@ fn main() {
     let mut term = Terminal::new().expect("Couldn't create terminal");
     term.hide_cursor().unwrap();
     
-    let limit = term.rows() / 3;
-    let mut url = gen_url(limit, "".to_string());
+    let mut url = gen_url(term.rows() / 3, "".to_string());
     let mut video_data = get_videos(&url);
     print_videos(&mut term, &video_data.videos);
 
@@ -150,14 +149,14 @@ fn main() {
                     break 'main;
                 }
                 '\x36' => {
-                    url = gen_url(limit, video_data.next_token);
+                    url = gen_url(term.rows() / 3, video_data.next_token);
                     video_data = get_videos(&url);
                     
                     print_videos(&mut term, &video_data.videos);
                     current_video = 0;
                 }
                 '\x35' => {
-                    url = gen_url(limit, video_data.prev_token);
+                    url = gen_url(term.rows() / 3, video_data.prev_token);
                     video_data = get_videos(&url);
                     
                     print_videos(&mut term, &video_data.videos);
