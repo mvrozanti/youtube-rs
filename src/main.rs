@@ -163,15 +163,33 @@ fn main() {
                     }
                 }
                 '\r' => {
-                    let video_url = format!("http://www.youtube.com/watch?v={}", 
-                                            video_data.videos[current_video].id);
-                    let change_file_path = format!("{}/src/change_file.sh", current_dir().unwrap().display());
-                    
-                    let cmd = Command::new(change_file_path)
-                        .arg(&video_url)
+                    let send_command = format!("{}/src/send_command.sh", current_dir().unwrap().display());
+
+                    Command::new(&send_command)
+                        .arg("stop")
                         .output()
                         .unwrap();
-                }
+
+                    for i in current_video..video_data.videos.len() {
+                        let video_url = format!("http://www.youtube.com/watch?v={}", 
+                                                video_data.videos[i].id);   
+                        if i == current_video {
+                            Command::new(&send_command)
+                                .arg("loadfile")
+                                .arg(&video_url)
+                                .output()
+                                .unwrap();
+                        } else {
+                            Command::new(&send_command)
+                                .arg("loadfile")
+                                .arg(&video_url)
+                                .arg("append")
+                                .output()
+                                .unwrap();
+                        }
+                    }
+
+                                    }
                 _ => {}
             }
         }
