@@ -70,22 +70,38 @@ fn get_videos(url: &str) -> VideoData {
     }
 }
 
-fn print_videos(term: &mut Terminal, videos: Vec<Video>) {
+fn print_videos(term: &mut Terminal, videos: &Vec<Video>) {
     let cell_light =   Cell::with_style(Color::Blue, Color::Default, Attr::Default);
     let cell_dark =    Cell::with_style(Color::Yellow, Color::Default, Attr::Default);
-    let cell_active =  Cell::with_style(Color::Default, Color::Magenta, Attr::Default); 
 
     term.clear().unwrap();
+    
     for (i, video) in videos.iter().enumerate() {
         term.printline(0, i * 3, &video.title);
         term.printline_with_cell(0, i * 3 + 1, &video.channel, cell_dark);
     }
+
+    change_active(term, 0, &videos);
 }
 
 fn gen_url(limit: usize, token: String) -> String {
     let base_url = "https://www.googleapis.com/youtube/v3/";
     format!("{}videos?chart=mostPopular&key={}&part=snippet&maxResults={}&pageToken={}",
              base_url, apikey::KEY, limit, token)
+}
+
+fn change_active(term: &mut Terminal, current_video: usize, videos: &Vec<Video>) {
+    let cell_active =  Cell::with_style(Color::Default, Color::Magenta, Attr::Default); 
+    
+    if current_video != 0 {
+        term.printline(0, current_video * 3 - 3, &videos[current_video - 1].title);
+    }
+    
+    if current_video != videos.len() - 1 {
+        term.printline(0, current_video * 3 + 3, &videos[current_video + 1].title);
+    }
+
+    term.printline_with_cell(0, current_video * 3, &videos[current_video].title, cell_active);
 }
 
 fn main() {
@@ -95,7 +111,10 @@ fn main() {
     let limit = term.rows() / 3;
     let mut url = gen_url(limit, "".to_string());
     let mut video_data = get_videos(&url);
-    print_videos(&mut term, video_data.videos);
+    print_videos(&mut term, &video_data.videos);
+
+    let mut current_video = 0;
+    change_active(&mut term, current_video, &video_data.videos);
 
     'main: loop {
         while let Some(Event::Key(ch)) = term.get_event(Duration::new(0, 0)).unwrap() {
@@ -106,16 +125,33 @@ fn main() {
                 '\x36' => {
                     url = gen_url(limit, video_data.next_token);
                     video_data = get_videos(&url);
-                    print_videos(&mut term, video_data.videos);
+                    
+                    print_videos(&mut term, &video_data.videos);
+                    current_video = 0;
                 }
                 '\x35' => {
                     url = gen_url(limit, video_data.prev_token);
                     video_data = get_videos(&url);
-                    print_videos(&mut term, video_data.videos);
+                    
+                    print_videos(&mut term, &video_data.videos);
+                    current_video = 0;
+                }
+                'A' => {
+                    if current_video != 0 {
+                        current_video = current_video - 1;
+                        change_active(&mut term, current_video, &video_data.videos);
+                    }
+                }
+                'B' => {
+                    if current_video != video_data.videos.len() - 1 {
+                        current_video = current_video + 1;
+                        change_active(&mut term, current_video, &video_data.videos);
+                    }
                 }
                 _ => {}
             }
         }
+
 
         term.swap_buffers().unwrap(); 
     }
