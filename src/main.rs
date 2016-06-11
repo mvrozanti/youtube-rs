@@ -120,10 +120,20 @@ fn main() {
 
     let mut current_video = 0;
     change_active(&mut term, current_video, &video_data.videos);
-    
+   
+    let mut video_arg = "--force-window";
+    for arg in args() {
+        match arg.as_str() {
+            "--audio" => {
+                video_arg = "--no-video";
+            }
+            _ => {}
+        }
+    }
+
     thread::spawn(move || {
         Command::new("mpv")
-            .arg("--force-window")
+            .arg(&video_arg)
             .arg("--idle")
             .arg("--input-ipc-server=/tmp/mpvsocket")
             .arg("--really-quiet")
