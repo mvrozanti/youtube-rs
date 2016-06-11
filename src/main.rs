@@ -2,10 +2,11 @@ extern crate hyper;
 extern crate rustty;
 extern crate rustc_serialize;
 
-use std::env::args;
+use std::env::{args, current_dir};
 use std::io::prelude::Read;
 use std::time::Duration;
-use std::process::Command;
+use std::thread;
+use std::process::{Command};
 
 use hyper::client::{Client, Response};
 use rustc_serialize::json::Json;
@@ -89,6 +90,7 @@ fn print_videos(term: &mut Terminal, videos: &Vec<Video>) {
 fn gen_url(limit: usize, token: String) -> String {
     let base_url = "https://www.googleapis.com/youtube/v3/";
     let playlist_id = args().nth(1).expect("No playlist id provided").to_string();
+
     format!("{}playlistItems?key={}&maxResults={}&pageToken={}&playlistId={}&part=snippet",
              base_url, apikey::KEY, limit, token, playlist_id)
 }
@@ -118,6 +120,15 @@ fn main() {
 
     let mut current_video = 0;
     change_active(&mut term, current_video, &video_data.videos);
+    
+    thread::spawn(move || {
+        let output = Command::new("mpv")
+            .arg("--force-window")
+            .arg("--idle")
+            .arg("--input-ipc-server=/tmp/mpvsocket")
+            .output()
+            .expect("Couldn't play video");
+    });
 
     'main: loop {
         while let Some(Event::Key(ch)) = term.get_event(Duration::new(0, 0)).unwrap() {
@@ -153,15 +164,13 @@ fn main() {
                 }
                 '\r' => {
                     let video_url = format!("http://www.youtube.com/watch?v={}", 
-                                            &video_data.videos[current_video].id);
-
-                    let output = Command::new("mpv")
-                        .arg("--loop-file")
-                        .arg("--really-quiet")
+                                            video_data.videos[current_video].id);
+                    let change_file_path = format!("{}/src/change_file.sh", current_dir().unwrap().display());
+                    
+                    let cmd = Command::new(change_file_path)
                         .arg(&video_url)
                         .output()
-                        .expect("Couldn't play video");
-
+                        .unwrap();
                 }
                 _ => {}
             }
