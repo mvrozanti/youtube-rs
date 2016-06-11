@@ -4,6 +4,7 @@ extern crate rustc_serialize;
 
 use std::io::prelude::Read;
 use std::time::Duration;
+use std::process::Command;
 
 use hyper::client::{Client, Response};
 use rustc_serialize::json::Json;
@@ -148,10 +149,21 @@ fn main() {
                         change_active(&mut term, current_video, &video_data.videos);
                     }
                 }
+                '\r' => {
+                    let video_url = format!("http://www.youtube.com/watch?v={}", 
+                                            &video_data.videos[current_video].id);
+
+                    let output = Command::new("mpv")
+                        .arg("--loop-file")
+                        .arg("--really-quiet")
+                        .arg(&video_url)
+                        .output()
+                        .expect("Couldn't play video");
+
+                }
                 _ => {}
             }
         }
-
 
         term.swap_buffers().unwrap(); 
     }
