@@ -2,6 +2,7 @@ extern crate hyper;
 extern crate rustty;
 extern crate rustc_serialize;
 
+use std::env::args;
 use std::io::prelude::Read;
 use std::time::Duration;
 use std::process::Command;
@@ -47,7 +48,7 @@ fn get_videos(url: &str) -> VideoData {
     let mut videos: Vec<Video> = Vec::new();
     
     for video in json.find("items").unwrap().as_array().unwrap().to_owned() {
-        let id = video.find("id").unwrap().as_string().unwrap();
+        let id = video.find_path(&["snippet", "resourceId", "videoId"]).unwrap().as_string().unwrap();
         let title = video.find_path(&["snippet", "title"]).unwrap().as_string().unwrap();
         let channel = video.find_path(&["snippet", "channelTitle"]).unwrap().as_string().unwrap();
 
@@ -87,8 +88,9 @@ fn print_videos(term: &mut Terminal, videos: &Vec<Video>) {
 
 fn gen_url(limit: usize, token: String) -> String {
     let base_url = "https://www.googleapis.com/youtube/v3/";
-    format!("{}videos?chart=mostPopular&key={}&part=snippet&maxResults={}&pageToken={}",
-             base_url, apikey::KEY, limit, token)
+    let playlist_id = args().nth(1).expect("No playlist id provided").to_string();
+    format!("{}playlistItems?key={}&maxResults={}&pageToken={}&playlistId={}&part=snippet",
+             base_url, apikey::KEY, limit, token, playlist_id)
 }
 
 fn change_active(term: &mut Terminal, current_video: usize, videos: &Vec<Video>) {
