@@ -16,3 +16,11 @@ This creates an executable called `youtube-rs` in `target/release/`
 `youtube-rs PlaylistId` or `youtube-rs PlaylistId --audio`
 
 Ex: `youtube-rs PLco_u-O9FeQ_cV5gc3VdUHoQYBI73MYkU`
+
+## Controls
+```
+Movement    - Arrow keys
+Play video  - enter
+Pause/pause - p
+Quit        - q
+```
